@@ -11,6 +11,8 @@ import RepoActionBar from "./components/repo-action-bar";
 import LatestCommit from "./components/latest-commit";
 import FileBrowser from "./components/file-browser";
 import ReadmeViewer from "./components/readme-viewer";
+import BreadcrumbNav from "./components/breadcrumb-nav";
+import FileViewer from "./components/file-viewer";
 
 interface RepositoryPageProps {
   params: Promise<{
@@ -19,6 +21,8 @@ interface RepositoryPageProps {
   }>;
   searchParams: Promise<{
     ref?: string; // branch or tag reference
+    path?: string; // current directory path
+    file?: string; // selected file
   }>;
 }
 
@@ -27,26 +31,33 @@ export default async function RepositoryPage({
   searchParams,
 }: RepositoryPageProps) {
   const { user, repo } = await params;
-  const { ref } = await searchParams;
+  const { ref, path, file } = await searchParams;
 
   try {
-    // Fetch repository data in parallel
-    const [repositoryResponse, contentsResponse, commitsResponse] =
-      await Promise.all([
-        getRepository(user, repo),
-        getRepositoryContents(user, repo, "", ref),
-        getRepositoryCommits(user, repo, { limit: 1, ref }),
-      ]);
+    // Get repository metadata first
+    const repositoryResponse = await getRepository(user, repo);
 
-    // Check for errors in responses
     if (repositoryResponse.error) {
       console.log("Repository error:", repositoryResponse.error);
       notFound();
     }
 
+    const repository = repositoryResponse.data!;
+
+    // Use provided ref or default branch
+    const currentRef = ref || repository.default_branch;
+    const currentPath = path || "";
+
+    // Fetch repository data in parallel
+    const [contentsResponse, commitsResponse] = await Promise.all([
+      getRepositoryContents(user, repo, currentPath, currentRef),
+      getRepositoryCommits(user, repo, { limit: 1, ref: currentRef }),
+    ]);
+
+    // Check for errors in responses
     if (contentsResponse.error) {
       console.log("Contents error:", contentsResponse.error);
-      notFound();
+      // notFound();
     }
 
     if (commitsResponse.error) {
@@ -54,7 +65,6 @@ export default async function RepositoryPage({
       // Commits error is not fatal, we can continue without latest commit
     }
 
-    const repository = repositoryResponse.data!;
     const contents = contentsResponse.data!;
     const latestCommit = commitsResponse.data?.[0] || null;
 
@@ -65,7 +75,9 @@ export default async function RepositoryPage({
             repository={repository}
             contents={contents}
             latestCommit={latestCommit}
-            currentRef={ref || repository.default_branch}
+            currentRef={currentRef}
+            currentPath={currentPath}
+            selectedFile={file || null}
           >
             {/* Repository Header */}
             <RepoHeader />
@@ -76,14 +88,20 @@ export default async function RepositoryPage({
             {/* Action Bar with Branch Selector and Clone Button */}
             <RepoActionBar />
 
+            {/* Breadcrumb Navigation */}
+            <BreadcrumbNav />
+
             {/* Latest Commit Info */}
             <LatestCommit />
 
             {/* File Browser */}
             <FileBrowser />
 
-            {/* README Viewer */}
-            <ReadmeViewer />
+            {/* File Viewer */}
+            <FileViewer />
+
+            {/* README Viewer (only show if no file is selected) */}
+            {!file && <ReadmeViewer />}
           </RepoProvider>
         </div>
       </div>

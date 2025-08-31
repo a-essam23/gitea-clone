@@ -5,19 +5,32 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Folder, File, FileText, Image, Code } from "lucide-react";
 import { useRepoStore } from "../store";
+import { useRepoNavigation } from "../utils/navigation";
 import type { IContentItem } from "../types";
 
 const FileBrowser: React.FC = () => {
   const repository = useRepoStore((state) => state.repository);
   const contents = useRepoStore((state) => state.contents);
+  const currentPath = useRepoStore((state) => state.currentPath);
   const currentRef = useRepoStore((state) => state.currentRef);
+  const isLoadingContents = useRepoStore((state) => state.isLoadingContents);
+
+  const { navigateToPath, selectFile } = useRepoNavigation();
 
   if (!repository) {
     return null;
   }
 
-  const { owner, name: repo } = repository;
-  const currentPath = "";
+  const handleItemClick = (item: IContentItem) => {
+    if (item.type === "dir") {
+      // Navigate to directory
+      const newPath = currentPath ? `${currentPath}/${item.name}` : item.name;
+      navigateToPath(newPath);
+    } else {
+      // Select file for viewing
+      selectFile(item.name);
+    }
+  };
 
   const getFileIcon = (item: IContentItem) => {
     if (item.type === "dir") {
@@ -62,7 +75,7 @@ const FileBrowser: React.FC = () => {
   };
 
   const buildHref = (item: IContentItem) => {
-    const basePath = `/${owner.login}/${repo}`;
+    const basePath = `/${repository.owner.login}/${repository.name}`;
     if (item.type === "dir") {
       return `${basePath}/tree/${currentRef}/${item.path}`;
     } else {
@@ -97,18 +110,16 @@ const FileBrowser: React.FC = () => {
         {sortedContents.map((item) => (
           <div
             key={item.path}
-            className="px-4 py-3 hover:bg-muted/50 transition-colors"
+            className="px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+            onClick={() => handleItemClick(item)}
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3 flex-1">
                 {getFileIcon(item)}
 
-                <a
-                  href={buildHref(item)}
-                  className="font-medium hover:text-blue-600 hover:underline"
-                >
+                <span className="font-medium hover:text-blue-600">
                   {item.name}
-                </a>
+                </span>
 
                 {item.type === "dir" && (
                   <Badge variant="outline" className="text-xs">

@@ -60,9 +60,17 @@ const createSuccessResponse = <T>(data: T): IAPIResponse<T> => ({
 export const getRepository = cache(
   async (owner: string, repo: string): Promise<IGetRepoResponse> => {
     try {
+      console.log(`Fetching repository: ${owner}/${repo}`);
       const response = await api.get(`/repos/${owner}/${repo}`);
+      console.log("Repository response status:", response.status);
       return createSuccessResponse(response.data);
     } catch (error) {
+      console.error("Repository fetch error:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Response data:", error.response?.data);
+        console.error("Response status:", error.response?.status);
+        console.error("Response headers:", error.response?.headers);
+      }
       return createErrorResponse(error, "Failed to fetch repository");
     }
   }
@@ -79,6 +87,9 @@ export const getRepositoryContents = cache(
     ref?: string
   ): Promise<IGetRepoContentsResponse> => {
     try {
+      console.log(
+        `Fetching contents: ${owner}/${repo}, path: ${path}, ref: ${ref}`
+      );
       const params: Record<string, string> = {};
       if (ref) {
         params.ref = ref;
@@ -88,8 +99,14 @@ export const getRepositoryContents = cache(
         `/repos/${owner}/${repo}/contents/${path}`,
         { params }
       );
+      console.log("Contents response status:", response.status);
       return createSuccessResponse(response.data);
     } catch (error) {
+      console.error("Contents fetch error:", error);
+      if (axios.isAxiosError(error)) {
+        console.error("Contents response data:", error.response?.data);
+        console.error("Contents response status:", error.response?.status);
+      }
       return createErrorResponse(error, "Failed to fetch repository contents");
     }
   }

@@ -103,6 +103,20 @@ export interface ICommit {
   html_url: string;
 }
 
+// New interfaces for file content and navigation
+export interface IFileContent {
+  name: string;
+  path: string;
+  content: string; // Decoded content
+  encoding: string;
+  size: number;
+  type: "text" | "image" | "binary";
+  language?: string; // For syntax highlighting
+  sha: string;
+  html_url: string;
+  download_url: string;
+}
+
 // API Response Types - Updated to use unified response pattern
 export type IGetRepoResponse = IAPIResponse<IRepository>;
 export type IGetRepoContentsResponse = IAPIResponse<IContentItem[]>;

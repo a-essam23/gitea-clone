@@ -10,6 +10,8 @@ interface RepoProviderProps {
   contents: IContentItem[];
   latestCommit: ICommit | null;
   currentRef: string;
+  currentPath: string;
+  selectedFile: string | null;
 }
 
 const RepoProvider: React.FC<RepoProviderProps> = ({
@@ -18,24 +20,38 @@ const RepoProvider: React.FC<RepoProviderProps> = ({
   contents,
   latestCommit,
   currentRef,
+  currentPath,
+  selectedFile,
 }) => {
-  const { setRepository, setContents, setLatestCommit, setCurrentRef } =
-    useRepoStore();
+  const {
+    setRepository,
+    setContents,
+    setLatestCommit,
+    setCurrentRef,
+    setCurrentPath,
+    setSelectedFile,
+  } = useRepoStore();
 
   useEffect(() => {
     setRepository(repository);
     setContents(contents);
     setLatestCommit(latestCommit);
     setCurrentRef(currentRef);
+    setCurrentPath(currentPath);
+    setSelectedFile(selectedFile);
   }, [
     repository,
     contents,
     latestCommit,
     currentRef,
+    currentPath,
+    selectedFile,
     setRepository,
     setContents,
     setLatestCommit,
     setCurrentRef,
+    setCurrentPath,
+    setSelectedFile,
   ]);
 
   return <>{children}</>;
